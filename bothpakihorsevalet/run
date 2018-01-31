@@ -1,0 +1,111 @@
+#!/usr/bin/python
+
+import sys
+import copy
+horses=sys.stdin.read().strip().split('\n')
+cap=horses[0].split(' ')
+horses.pop(0)
+tothorse=len(horses)
+for i,horse in enumerate(horses):
+	horses[i]=[i+1,horse.split(' ')]
+sterhorse=copy.deepcopy(horses)
+floors = len(cap)
+cap=map(int,cap)
+horses.sort(key=lambda horse: float(horse[1][0]))
+x=0
+daycaps=[]
+omgcap=copy.deepcopy(cap)
+omg=[]
+todayhorse=[]
+day=0
+# This reorganizes a new list that sorts the horses by arrival and then length of stay.
+while x<tothorse:
+	todayhorse=[]
+	while x<tothorse and int(horses[x][1][0])==day:
+		todayhorse.append([float(horses[x][1][1]),float(horses[x][0])])
+		x=x+1
+	todayhorse.sort(reverse=True)
+	omg.append(todayhorse)
+	day=day+1
+day=0
+omgsterile=copy.deepcopy(omg)
+curcap=copy.deepcopy(cap)
+residents=[]
+output=[]
+maxhorseload=[]
+# This function increments the day, decrements the residents horses' lengths of stay, 
+# kicks out horses who're done, and appends them to the output list.
+def dayup(day,maxhorseload,residents,curcap,output):
+	kickout=[]
+	maxhorseload.append(len(residents))
+	for i,resident in enumerate(residents):
+		resident[0]-=1
+		if resident[0]==0:
+			output.append([resident[1],resident[2]+1])
+			curcap[resident[2]]+=1
+			kickout.append(i)
+	rkickout=reversed(kickout)
+	for gtfo in rkickout:
+		residents.pop(gtfo)
+	day+=1
+	return day, maxhorseload, residents, curcap, output
+totday=len(omg)
+day=0
+# This will place the horses according to their arrival day, then cycle through that
+# using the previously made function for day increments.
+while day<totday:
+	neccap=len(omg[day])
+	topfloor=0
+	while neccap>0:
+		neccap=neccap-curcap[topfloor]
+		if neccap >0:
+			topfloor+=1
+	while len(omg[day])>0:
+		if curcap[topfloor]>0:
+			curcap[topfloor]-=1
+			residents.append([omg[day][0][0],omg[day][0][1],topfloor])
+		if curcap[topfloor]==0:
+			topfloor-=1
+		omg[day].pop(0)
+	day,maxhorseload,residents,curcap,output=dayup(day,maxhorseload,residents,curcap,output)
+while len(residents)>0:
+	day,maxhorseload,residents,curcap,output=dayup(day,maxhorseload,residents,curcap,output)
+day=0
+omg=copy.deepcopy(omgsterile)
+output=[]
+horses=copy.deepcopy(sterhorse)
+totaldays=len(maxhorseload)
+while totaldays > 0:
+	daycaps.append(copy.deepcopy(omgcap))
+	totaldays-=1
+horses.sort(key=lambda horse: float(horse[1][1]),reverse=True)
+def fits(arrive,length,floor):
+	leave=arrive+length-1
+	while leave>=arrive:
+		if daycaps[leave][floor]>0:
+			leave-=1
+		else:
+			return False
+	return True
+
+def place(arrive, length):
+	maxcap=max(maxhorseload[arrive:arrive+length])
+	neccap=maxcap
+	topfloor=0
+	while neccap>0:
+		neccap=neccap-cap[topfloor]
+		if neccap >0:
+			topfloor+=1
+	while fits(arrive,length,topfloor)!=True:
+		topfloor-=1
+	leave=arrive+length-1
+	while leave>=arrive:
+		daycaps[leave][topfloor]-=1
+		leave-=1
+	return(topfloor)
+
+for i,(arrive,length) in horses:
+	output.append([i,place(int(arrive),int(length))])
+
+for horsenum in sorted(output):
+	print int(horsenum[0]),horsenum[1]+1

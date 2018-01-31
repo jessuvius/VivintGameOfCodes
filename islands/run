@@ -1,0 +1,23 @@
+#!/usr/bin/python
+
+import sys
+isl=sys.stdin.read().strip().split('\n')
+numislands=len(isl)
+priorities=[.3,.15,.1,.05,.1,.15,.05,.03,.07]
+for i,islandstats in enumerate(isl):
+	isl[i]=islandstats.split(' ')
+x=0
+ranks=[]
+while x<numislands:
+	y=0
+	sum=1
+	while y<9:
+		sum=sum*float(isl[x][y])**priorities[y]
+		y=y+1
+	ranks.append([sum,x])
+	x=x+1
+ranks.sort(reverse=True)
+x=0
+while x<numislands:
+	print ranks[x][1]
+	x=x+1
